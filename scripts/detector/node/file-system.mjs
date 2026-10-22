@@ -23,7 +23,7 @@ function walkDir(dir) {
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return files; }
   for (const entry of entries) {
-    if (SKIP_DIRS.has(entry.name)) continue;
+    if (SKIP_DIRS.has(entry.name) || entry.isSymbolicLink()) continue; // no scanning outside the target root
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) files.push(...walkDir(full));
     else if (SCANNABLE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) files.push(full);
@@ -159,7 +159,7 @@ async function isPortListening(port, fingerprint = null) {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch(`http://localhost:${port}/`, { signal: controller.signal, redirect: 'follow' });
+    const res = await fetch(`http://localhost:${port}/`, { signal: controller.signal, redirect: 'manual' });
     clearTimeout(timeout);
 
     // Check header fingerprint
