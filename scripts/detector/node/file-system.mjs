@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { shouldInspectHttpResponse } from './probe-policy.mjs';
 
 // ---------------------------------------------------------------------------
 // File walker
@@ -161,6 +162,8 @@ async function isPortListening(port, fingerprint = null) {
     const timeout = setTimeout(() => controller.abort(), 2000);
     const res = await fetch(`http://localhost:${port}/`, { signal: controller.signal, redirect: 'manual' });
     clearTimeout(timeout);
+
+    if (!shouldInspectHttpResponse(res.status)) return { listening: true, matched: false };
 
     // Check header fingerprint
     if (fingerprint.header) {
